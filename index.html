@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Space+Grotesk:wght@400;600;700&family=Oswald:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&family=Rajdhani:wght@500;700&family=Righteous&family=Abril+Fatface&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/shell.css">
+</head>
+<body class="app-body">
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- ══════════ TOP BAR ══════════ -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="white" aria-hidden="true"><path d="M2 1.5l10 5.5-10 5.5V1.5z"/></svg>
+    </div>
+    TELE<span class="logo-accent">PROMPT</span>
+  </div>
+
+  <div class="topbar-actions">
+    <nav class="nav-links" aria-label="Main">
+      <a class="nav-link active" href="index.html" aria-current="page">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><path d="M5.5 14h5M8 11.5V14"/></svg>
+        Teleprompter
+      </a>
+      <a class="nav-link" href="library.html">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 4.5a1 1 0 0 1 1-1h3l1.5 1.5h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1z"/></svg>
+        Library
+      </a>
+      <a class="nav-link" href="report.html">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5V9m4 4.5v-8m4 8V7m4 6.5V3.5"/></svg>
+        Report
+      </a>
+    </nav>
+
+    <span class="topbar-badge" id="topbarBadge">Ready</span>
+
+    <button class="icon-btn" id="fullscreenTopBtn" onclick="toggleFullscreen()" title="Fullscreen (F)">
+      <svg id="fsIcon" width="15" height="15" viewBox="0 0 13 13" fill="currentColor" aria-hidden="true"><path d="M1 1h4V2.5H2.5V5H1zm7 0h4v4h-1.5V2.5H8zm-7 7h1.5v2.5H5V12H1zm9.5 0H12v4H8v-1.5h2.5z"/></svg>
+      <span class="sr-only" id="fsLabel">Fullscreen</span>
+    </button>
+
+    <button class="icon-btn" id="pageBgBtn" onclick="togglePageBgPanel()" title="Appearance &amp; theme">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="8" cy="8" r="3"/><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M12.95 3.05l-1.13 1.13M4.18 11.82l-1.13 1.13"/>
+      </svg>
+      <span class="sr-only">Appearance and theme</span>
+    </button>
+
+    <div class="avatar-chip" title="Local workspace — everything is saved in this browser">
+      <span class="avatar">AA</span>
+      <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP BODY ══════════ -->
+<div class="app">
+
+  <!-- ══════════ LEFT: EDITOR ══════════ -->
+  <div class="editor-panel">
+
+    <!-- Your Script -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon pink">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.3 3.2L12.5 6 9.3 7.3 8 10.5 6.7 7.3 3.5 6l3.2-1.3zM12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>
+        </span>
+        <div class="card-titles">
+          <h2>Your Script</h2>
+          <p>Write, organize, and bring your ideas to life.</p>
+        </div>
+      </header>
+
+      <div class="script-name-field">
+        <span class="script-name-text" id="currentScriptName">Untitled script</span>
+        <button class="field-edit" id="renameScriptBtn" title="Rename this script">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 2.3l2.4 2.4-8 8H3.3V10z"/></svg>
+          <span class="sr-only">Rename</span>
+        </button>
+      </div>
+
+      <div class="chip-row">
+        <button class="chip" id="renameScriptBtn2" type="button">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 2.3l2.4 2.4-8 8H3.3V10z"/></svg>
+          Rename
+        </button>
+        <button class="chip" id="saveAsNewBtn" title="Keep this version and start a separate copy">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7L13.5 6v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M5.5 9.5h5v5h-5z"/></svg>
+          Save as new
+        </button>
+        <a class="chip" href="library.html">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 4.5a1 1 0 0 1 1-1h3l1.5 1.5h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1z"/></svg>
+          All scripts
+        </a>
+      </div>
+    </section>
+
+    <!-- Reader Mode -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon violet">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.6"/><path d="M5 6h6M5 8.5h4"/></svg>
+        </span>
+        <div class="card-titles">
+          <h2>Reader Mode</h2>
+          <p>Choose how many readers will read your script.</p>
+        </div>
+      </header>
+
+      <div class="mode-toggle" role="group" aria-label="Number of readers">
+        <button class="mode-btn active" id="mode1Btn" onclick="setMode(1)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c0-3 2.7-4.5 6-4.5s6 1.5 6 4.5"/></svg>
+          <span>1 Reader</span>
+        </button>
+        <button class="mode-btn" id="mode2Btn" onclick="setMode(2)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c0-3 2.7-4.5 6-4.5s6 1.5 6 4.5"/></svg>
+          <span>2 Readers</span>
+        </button>
+        <button class="mode-btn" id="mode3Btn" onclick="setMode(3)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c0-3 2.7-4.5 6-4.5s6 1.5 6 4.5"/></svg>
+          <span>3 Readers</span>
+        </button>
+        <button class="mode-btn" id="mode4Btn" onclick="setMode(4)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c0-3 2.7-4.5 6-4.5s6 1.5 6 4.5"/></svg>
+          <span>4 Readers</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Script Stats -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon cyan">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V9M6.5 13.5v-8M10.5 13.5V7M14 13.5V3.5"/></svg>
+        </span>
+        <div class="card-titles"><h2>Script Stats</h2></div>
+        <span class="live-tag"><i></i>Live</span>
+      </header>
+
+      <div class="stat-cards">
+        <div class="stat-card">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h6L12.5 4.5v10h-9z"/><path d="M5.5 7h5M5.5 9.5h5M5.5 12h3"/></svg>
+          <div class="stat-num" id="wcWords">0</div>
+          <div class="stat-cap">Words</div>
+        </div>
+        <div class="stat-card">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M2.5 7h8M2.5 10h11M2.5 13h6"/></svg>
+          <div class="stat-num" id="wcLines">0</div>
+          <div class="stat-cap">Lines</div>
+        </div>
+        <div class="stat-card">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.6"/></svg>
+          <div class="stat-num" id="wcTime">0:00</div>
+          <div class="stat-cap">Est. Time</div>
+        </div>
+      </div>
+
+      <!-- who speaks how much — the totals above hide this -->
+      <div class="per-reader" id="perReaderStats"></div>
+    </section>
+
+    <!-- Keyboard Shortcuts -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon amber">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.5 1.5L3 9h4l-.5 5.5L13 7H9z"/></svg>
+        </span>
+        <div class="card-titles"><h2>Keyboard Shortcuts</h2></div>
+      </header>
+
+      <div class="keys-grid">
+        <div class="key-row"><kbd class="wide">Space</kbd><span>Play/Pause</span></div>
+        <div class="key-row"><kbd>F</kbd><span>Fullscreen</span></div>
+        <div class="key-row"><kbd>&#8593;</kbd><span>Speed up</span></div>
+        <div class="key-row"><kbd>R</kbd><span>Restart from top</span></div>
+        <div class="key-row"><kbd>&#8595;</kbd><span>Slow down</span></div>
+        <div class="key-row"><kbd>L</kbd><span>Loop on/off</span></div>
+        <div class="key-row"><kbd>J</kbd><span>Jump mode</span></div>
+        <div class="key-row"><kbd>E</kbd><span>Back to editing</span></div>
+        <div class="key-row"><kbd>M</kbd><span>Mirror flip</span></div>
+      </div>
+    </section>
+
+    <!-- Script text -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon pink">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="1.6"/><path d="M5 5.5h6M5 8h6M5 10.5h3.5"/></svg>
+        </span>
+        <div class="card-titles">
+          <h2 id="scriptCardTitle">Script</h2>
+          <p id="scriptHowTo">Write top to bottom. One line per screen line.</p>
+        </div>
+      </header>
+
+      <!-- create / undo / size, above the box -->
+      <div class="script-toolbar">
+        <button class="chip" id="newScriptBtn" title="Start a brand new script">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          New
+        </button>
+        <button class="chip" id="undoBtn" title="Undo the last big change" disabled>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 7.5h7a3 3 0 0 1 0 6H6"/><path d="M5.5 4.5L2.5 7.5l3 3"/></svg>
+          Undo
+        </button>
+        <span class="toolbar-gap"></span>
+        <button class="chip" id="sizeBtn" title="Make the writing box taller">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M5 5.5L8 2.5l3 3M5 10.5L8 13.5l3-3"/></svg>
+          <span id="sizeLabel">Medium</span>
+        </button>
+        <button class="chip" id="focusBtn" title="Write using the whole window">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.5H2.5V6M10 13.5h3.5V10M13.5 6V2.5H10M2.5 10v3.5H6"/></svg>
+          Full screen
+        </button>
+      </div>
+
+      <!-- reader chips: name, colour, and how much each one speaks -->
+      <div class="readers" id="readersList"></div>
+
+      <div class="script-warnings" id="scriptWarnings"></div>
+
+      <div class="script-editor" id="scriptEditor">
+        <div class="focus-bar">
+          <span class="focus-title" id="focusTitle">Writing</span>
+          <span class="focus-hint">Esc to close</span>
+          <button class="chip" id="focusCloseBtn">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            Done
+          </button>
+        </div>
+        <textarea id="scriptBody" spellcheck="true"
+          placeholder="Type or paste your script here…&#10;&#10;Leave a blank line to add a pause.&#10;Long paragraphs are split automatically.">Welcome to the Teleprompter!
+
+This text will scroll upward on the screen. You can read along as it moves, and long paragraphs are broken into comfortable lines for you automatically.
+
+Edit this text in the box on the left side.
+
+Practice your speech or dialogue here.
+
+Adjust the speed using the slider below, and press Pause anytime you need to stop.
+
+Happy reading!</textarea>
+
+        <!-- save sits under the box, where you finish writing -->
+        <div class="script-footer">
+          <span class="save-state" id="saveState">Saved</span>
+          <span class="toolbar-gap"></span>
+          <button class="chip primary" id="saveNowBtn" title="Save this script now (Ctrl+S)">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7L13.5 6v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M5.5 9.5h5v5h-5z"/></svg>
+            Save script
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Font -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon orange">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5L6.5 2.5h1.2l4 11M4.4 10h5.8"/></svg>
+        </span>
+        <div class="card-titles"><h2>Font Style</h2></div>
+      </header>
+      <div class="font-grid" id="fontGrid"></div>
+    </section>
+
+    <!-- Display -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon green">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5h11M2.5 11h11"/><circle cx="6" cy="5" r="1.8"/><circle cx="10.5" cy="11" r="1.8"/></svg>
+        </span>
+        <div class="card-titles"><h2>Display Settings</h2></div>
+      </header>
+
+      <div class="slider-row">
+        <span class="slider-label">Font size</span>
+        <input type="range" id="fontSlider" min="20" max="72" value="36" step="1" oninput="updateFont()">
+        <span class="slider-val" id="fontVal">36px</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Scroll speed</span>
+        <input type="range" id="speedSlider" min="10" max="160" value="50" step="5" oninput="updateSpeed()">
+        <span class="slider-val" id="speedValLeft">50</span>
+      </div>
+    </section>
+
+    <!-- Stage background -->
+    <section class="card">
+      <header class="card-head">
+        <span class="card-icon violet">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.6"/><path d="M2 10.5l3.5-3 3 2.5 2-1.8L14 11"/></svg>
+        </span>
+        <div class="card-titles"><h2>Stage Background</h2></div>
+      </header>
+
+      <div class="bg-color-row">
+        <span class="slider-label">Color</span>
+        <div class="bg-swatches" id="bgSwatches"></div>
+        <input type="color" id="bgCustomColor" title="Custom color" class="mini-color">
+      </div>
+
+      <div class="bg-wallpaper-row">
+        <span class="slider-label">Wallpaper</span>
+        <div class="wp-grid" id="wpGrid"></div>
+      </div>
+
+      <button class="chip danger" onclick="resetBg()">✕ Clear</button>
+    </section>
+
+    <!-- sticky primary action -->
+    <div class="start-dock">
+      <button class="start-btn" onclick="launchStage()">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M2 1.5l10 5.5-10 5.5V1.5z"/></svg>
+        Start Teleprompter
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ══════════ RIGHT: STAGE ══════════ -->
+  <div class="stage" id="stage">
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="stage-fade-top"></div>
+    <div class="stage-fade-bottom"></div>
+    <div class="reticle"></div>
+    <div class="reticle-glow"></div>
+
+    <div class="stage-tools">
+      <button class="stage-tool" onclick="togglePageBgPanel()" title="Typography &amp; theme"><strong>Aa</strong></button>
+      <button class="stage-tool" onclick="toggleMirror()" title="Mirror flip (M)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M8 2v12M2 5l3 3-3 3M14 5l-3 3 3 3"/></svg>
+      </button>
+    </div>
+
+    <div class="pause-badge" id="pauseBadge">⏸ Paused</div>
+    <div class="stage-timer" id="stageTimer">0:00</div>
+
+    <!-- idle hero -->
+    <div class="stage-hint" id="stageHint">
+      <div class="hero-icon">
+        <svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 4.5h11L26 10.5v19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 8 29.5v-23A1.5 1.5 0 0 1 9.5 5z"/>
+          <path d="M13 14h8M13 18.5h8M13 23h5"/>
+        </svg>
+        <span class="hero-spark">✦</span>
+      </div>
+      <h2 class="hero-title">Write your script</h2>
+      <p class="hero-sub">and let your words flow</p>
+      <p class="hero-body">
+        The teleprompter will scroll your script smoothly<br>
+        so you can focus on what matters — you.
+      </p>
+      <div class="hero-rule"><i></i></div>
+      <p class="hero-steps">Scroll <b>•</b> Speak <b>•</b> Create</p>
+    </div>
+
+    <div class="scroll-track" id="scrollTrack"></div>
+
+    <!-- Countdown overlay -->
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="countdown-ring" id="countdownRing"></div>
+      <div class="countdown-num" id="countdownNum">3</div>
+    </div>
+
+    <div class="jump-hint" id="jumpHint">✦ Click any line to jump</div>
+
+    <!-- Launch flash overlay -->
+    <div class="launch-overlay" id="launchOverlay">
+      <div class="launch-flash" id="launchFlash"></div>
+    </div>
+
+    <!-- Completion screen -->
+    <div class="complete-screen" id="completeScreen">
+      <div class="complete-ring">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M5 14l6 6L23 8"/>
+        </svg>
+      </div>
+      <div class="complete-title">Script Complete</div>
+      <div class="complete-sub">Great reading session!</div>
+      <div class="complete-actions">
+        <button class="complete-btn" onclick="restartPlay()">&#8635; Read Again</button>
+        <button class="complete-btn secondary" onclick="resetStage()">Edit Script</button>
+      </div>
+    </div>
+
+    <!-- playback controls -->
+    <div class="controls-bar" id="controlsBar" style="display:none">
+      <button class="ctrl-btn reset-btn" onclick="resetStage()" title="Back to editing (E)" aria-label="Back to editing">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor" aria-hidden="true"><path d="M1.5 6.5a5 5 0 1 0 1-3H1V1H0v5h5V5H3.2A4 4 0 1 1 1.5 6.5z"/></svg>
+        <span class="ctrl-label">Edit</span>
+      </button>
+      <button class="ctrl-btn play-btn" id="playBtn" onclick="togglePlay()" title="Play / pause (Space)">
+        <svg id="playIcon" width="13" height="13" viewBox="0 0 13 13" fill="currentColor" aria-hidden="true"><path d="M2 1.5l9 5-9 5V1.5z"/></svg>
+        <span id="playLabel">Play</span>
+      </button>
+      <button class="ctrl-btn" id="restartBtn" onclick="restartPlay()" title="Restart from the top (R)" aria-label="Restart from the top">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor" aria-hidden="true"><path d="M6.5 1.5V0L9.5 2.25 6.5 4.5V3a3.5 3.5 0 1 0 3.5 3.5h1.5A5 5 0 1 1 6.5 1.5z"/></svg>
+        <span class="ctrl-label">Restart</span>
+      </button>
+      <div class="scrub-wrap">
+        <label for="scrubBar">SCROLL</label>
+        <input type="range" min="0" max="100" value="0" step="0.5" id="scrubBar" oninput="scrubTo(this.value)">
+        <span class="scrub-pct" id="scrubPct">0%</span>
+      </div>
+      <div class="ctrl-speed">
+        <label for="speedCtrl">SPEED</label>
+        <input type="range" min="10" max="160" value="50" step="5" id="speedCtrl" oninput="syncSpeed(this.value)">
+        <span class="speed-num" id="speedNum">50</span>
+      </div>
+      <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Fullscreen (F)" aria-label="Toggle fullscreen">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M1 1h3.5V2.5H2.5V5H1zm5.5 0H10v3.5H8.5V2.5H6.5zm-5.5 6H2.5v1.5H5V10H1zm7.5 0H10V10H6.5V8.5H8.5z"/></svg>
+        <span class="ctrl-label" id="fsBtnLabel">Full</span>
+      </button>
+      <button class="highlight-mode-btn" id="highlightBtn" onclick="toggleHighlightMode()" title="Jump mode — click any line to go straight to it (J)" aria-label="Toggle jump mode">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 3.5h10M1.5 6.5h6M1.5 9.5h4"/><path d="M9.5 7.5l3 3-1.5.4-.4 1.5-3-3z" fill="currentColor"/></svg>
+        <span class="ctrl-label">Jump</span>
+      </button>
+      <button class="mirror-btn" id="loopBtn" onclick="toggleLoop()" title="Loop — restart automatically when the script ends (L)" aria-label="Toggle loop">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5h6a2 2 0 0 1 0 4H3.5a2 2 0 0 1 0-4z"/><path d="M5 1.8L3.2 3.5 5 5.2M8 7.8l1.8 1.7L8 11.2"/></svg>
+        <span class="ctrl-label">Loop</span>
+      </button>
+      <button class="mirror-btn" id="mirrorBtn" onclick="toggleMirror()" title="Mirror flip, for glass teleprompters (M)" aria-label="Toggle mirror flip">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M6.5 1v11M1 3.5l3 3-3 3M12 3.5l-3 3 3 3"/></svg>
+        <span class="ctrl-label">Mirror</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── UI THEME PANEL ── -->
+<div id="pageBgPanel" style="display:none;position:fixed;top:60px;right:16px;z-index:100;width:320px;max-height:88vh;overflow-y:auto;background:rgba(12,12,22,0.98);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(28px);box-shadow:0 12px 60px rgba(0,0,0,0.7);padding:20px;animation:slideDown 0.3s cubic-bezier(0.16,1,0.3,1);">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <span style="font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">✦ UI Theme</span>
+    <button onclick="togglePageBgPanel()" style="background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:4px 8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">✕</button>
+  </div>
+
+  <!-- TAB BAR -->
+  <div style="display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px;margin-bottom:18px;">
+    <button class="theme-tab active" id="tabBg" onclick="switchTab('bg')" style="flex:1;padding:7px 0;border:none;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;border-radius:7px;cursor:pointer;letter-spacing:.04em;transition:all .2s;">Background</button>
+    <button class="theme-tab" id="tabUi" onclick="switchTab('ui')" style="flex:1;padding:7px 0;border:none;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;border-radius:7px;cursor:pointer;letter-spacing:.04em;transition:all .2s;">UI Colors</button>
+  </div>
+
+  <!-- BG TAB -->
+  <div id="tabBgContent">
+
+    <!-- Custom color picker -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🎨 Custom Color</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="color" id="pageBgColor" value="#07070f" style="width:48px;height:40px;border:none;border-radius:10px;cursor:pointer;padding:3px;background:var(--surface2);flex-shrink:0;" oninput="applyPageBg('color',this.value)">
+        <input type="text" id="pageBgHex" value="#07070f" placeholder="#07070f" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 10px;outline:none;" oninput="onHexInput(this.value)">
+      </div>
+    </div>
+
+    <!-- Solid colors -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">⬛ Solid Colors</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;" id="pageSolidSwatches"></div>
+    </div>
+
+    <!-- Gradient wallpapers -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🌌 Gradient Wallpapers</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;" id="pageGradSwatches"></div>
+    </div>
+
+
+    <!-- Blur + opacity controls -->
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">✦ Panel Overlay</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;width:60px;">Blur</span>
+        <input type="range" min="0" max="40" value="20" id="panelBlurSlider" oninput="updatePanelBlur(this.value)" style="flex:1;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);min-width:28px;text-align:right;" id="panelBlurVal">20px</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;width:60px;">Opacity</span>
+        <input type="range" min="10" max="100" value="90" id="panelOpacitySlider" oninput="updatePanelOpacity(this.value)" style="flex:1;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);min-width:28px;text-align:right;" id="panelOpacityVal">90%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI COLORS TAB -->
+  <div id="tabUiContent" style="display:none;">
+
+    <!-- Accent color -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">✦ Accent Color (buttons, glow)</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <input type="color" id="accentColorPicker" value="#7c6fff" style="width:48px;height:40px;border:none;border-radius:10px;cursor:pointer;padding:3px;background:var(--surface2);flex-shrink:0;" oninput="applyAccent(this.value)">
+        <div style="display:flex;flex-wrap:wrap;gap:5px;" id="accentPresets"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar color -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🎨 Sidebar Color</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <input type="color" id="sidebarColorPicker" value="#0f0f1c" style="width:48px;height:40px;border:none;border-radius:10px;cursor:pointer;padding:3px;background:var(--surface2);flex-shrink:0;" oninput="applySidebarColor(this.value)">
+        <div style="display:flex;flex-wrap:wrap;gap:5px;" id="sidebarPresets"></div>
+      </div>
+    </div>
+
+    <!-- Text color -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🔤 Sidebar Text Colour</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.5;">Script text colour is set per reader in the <strong style="color:var(--accent2)">Script</strong> section.</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="color" id="textColorPicker" value="#eeeef8" style="width:48px;height:40px;border:none;border-radius:10px;cursor:pointer;padding:3px;background:var(--surface2);flex-shrink:0;" oninput="applyTextColor(this.value)">
+        <div style="display:flex;flex-wrap:wrap;gap:5px;" id="textColorPresets"></div>
+      </div>
+    </div>
+
+    <!-- Preset themes -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🎭 Full UI Themes</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;" id="themePresets"></div>
+    </div>
+
+    <!-- Reset UI -->
+    <button onclick="resetUIColors()" style="width:100%;padding:9px;background:var(--surface2);border:1px solid rgba(255,100,100,0.25);border-radius:8px;color:rgba(255,100,100,0.75);font-size:11px;font-weight:700;cursor:pointer;transition:background .15s;letter-spacing:.04em;" onmouseover="this.style.background='rgba(255,100,100,0.1)'" onmouseout="this.style.background='var(--surface2)'">✕ Reset UI Colors</button>
+  </div>
+
+</div>
+
+<!-- Rename / save-as dialog -->
+<div class="modal-backdrop" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameModalTitle">
+  <div class="modal">
+    <h3 id="nameModalTitle">Rename script</h3>
+    <label for="nameInput">Script name</label>
+    <input type="text" id="nameInput" maxlength="80" placeholder="e.g. Opening speech">
+    <div class="modal-actions">
+      <button class="btn" id="nameCancelBtn">Cancel</button>
+      <button class="btn primary" id="nameSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/script-model.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
