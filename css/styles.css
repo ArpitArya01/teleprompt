@@ -1,3 +1,12 @@
+/* ═══════════════════════════════════════════════════════════════
+   styles.css — stage and teleprompter machinery
+   ───────────────────────────────────────────────────────────────
+   Loaded first. Defines the colour tokens (--accent, --surface,
+   --text …), the top bar, the scrolling stage and the playback
+   controls. pages.css and shell.css build on these.
+   ═══════════════════════════════════════════════════════════════ */
+
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
