@@ -10,6 +10,9 @@ Desktop.ini
 *.swp
 *~
 
+# Local assistant settings
+.kiro/
+
 # Local scratch files
 _shot*.html
 _diag.html
