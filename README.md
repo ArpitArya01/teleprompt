@@ -282,6 +282,8 @@ Fonts stylesheet.
 
 - Storage is per-browser and per-machine. Use **Export backup** to move your
   scripts somewhere else.
+- Clearing the browser's site data for this page also clears your scripts and
+  practice history, so export a backup first if you want to keep them.
 - `localStorage` is a few megabytes, which is thousands of scripts but not
   unlimited. Version history is capped at 12 entries per script and run history
   at 200 entries.
