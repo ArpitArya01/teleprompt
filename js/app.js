@@ -201,7 +201,7 @@ function setReaderName(id, value) {
   if (!r) return;
   r.name = String(value || '').trim() || ('Reader ' + id);
   if (launched) rebuildLines(true);
-  scheduleScriptSave();
+  markUnsaved();
   updateWordCount();
 }
 
@@ -212,7 +212,7 @@ function setReaderColor(id, hex) {
   r.color = hex;
   if (launched) rebuildLines(true);
   renderReaders();
-  saveScripts();
+  markUnsaved();
 }
 
 /**
@@ -247,7 +247,7 @@ function renderScriptWarnings(stats, dupes) {
         group.slice(1).forEach(r => { r.color = tpSuggestFreeColor(readers, mode, palette); });
         renderReaders();
         if (launched) rebuildLines(true);
-        saveScripts();
+        markUnsaved();
       });
   });
 
@@ -261,7 +261,7 @@ function renderScriptWarnings(stats, dupes) {
         r.color = tpBrightenForStage(r.color, backdrop);
         renderReaders();
         if (launched) rebuildLines(true);
-        saveScripts();
+        markUnsaved();
       });
   });
 
@@ -953,56 +953,84 @@ function renderPerReaderStats(stats) {
     updateWordCount();
     renderReaders();
     markUnsaved();
-    scheduleScriptSave();
     if (launched) scheduleLiveRebuild();
   });
 })();
 
 /* ── save state badge ────────────────────────────────────────────
-   Autosave is quiet, which made it unclear whether work was stored.
-   The badge says Saved / Unsaved so you always know. */
+   Nothing is written to storage until you ask for it, so the badge
+   under the box is the single source of truth: Unsaved means the
+   text on screen is newer than the copy in the library. */
+
+/** True when the editor holds changes that are not in storage yet. */
+let scriptDirty = false;
 
 function markUnsaved() {
+  scriptDirty = true;
   const b = document.getElementById('saveState');
-  if (b) { b.textContent = 'Unsaved'; b.classList.add('dirty'); }
+  if (b) {
+    b.textContent = 'Unsaved';
+    b.classList.add('dirty');
+    b.title = 'Press “Save script” (or Ctrl+S) to keep these changes';
+  }
+  const btn = document.getElementById('saveNowBtn');
+  if (btn) btn.classList.add('needs-save');
 }
 
 function markSaved() {
+  scriptDirty = false;
   const b = document.getElementById('saveState');
-  if (b) { b.textContent = 'Saved'; b.classList.remove('dirty'); }
+  if (b) {
+    b.textContent = 'Saved';
+    b.classList.remove('dirty');
+    b.title = 'This script matches what is stored';
+  }
+  const btn = document.getElementById('saveNowBtn');
+  if (btn) btn.classList.remove('needs-save');
 }
 
-/** Save immediately rather than waiting for the debounce. */
+/**
+ * The one and only write of the script you are editing.
+ * Called from the Save button, Ctrl+S, and the unsaved-changes guard —
+ * never on a timer, so nothing is stored until you ask for it.
+ */
 function saveScriptNow() {
-  clearTimeout(scriptSaveTimer);
+  if (!activeScriptId) return;
+
+  // Snapshot the version being replaced, so Undo returns to it.
+  const previous = tpGetActiveScript();
+  if (previous && previous.body !== scriptBodyValue()) {
+    const next = tpPushHistory(previous.history, previous.body);
+    if (next !== previous.history) tpUpdateScript(activeScriptId, { history: next });
+  }
+
   saveScripts();
-  scheduleHistorySnapshot();
+  refreshUndoButton();
   markSaved();
-  showSavedToast('Script saved ✓');
+  showSavedToast('Saved to “' + activeScriptName() + '” ✓');
 }
 
 /* ── make a new script without leaving the editor ─────────────── */
 
 function createNewScript() {
-  openNameModal('New script', '', name => {
-    // Don't lose whatever is in the box right now.
-    clearTimeout(scriptSaveTimer);
-    saveScripts();
+  // Switching away would drop whatever is in the box, so ask first.
+  guardUnsaved('Starting a new script', () => {
+    openNameModal('New script', suggestScriptName('Untitled script'), name => {
+      const created = tpAddScript(tpMakeScript(name, '', mode, readers));
+      activeScriptId = created.id;
+      tpSetActiveScript(created.id);
 
-    const created = tpAddScript(tpMakeScript(name, '', mode, readers));
-    activeScriptId = created.id;
-    tpSetActiveScript(created.id);
+      const area = document.getElementById('scriptBody');
+      if (area) { area.value = ''; area.focus(); }
 
-    const area = document.getElementById('scriptBody');
-    if (area) { area.value = ''; area.focus(); }
-
-    renderCurrentScriptName();
-    renderReaders();
-    updateWordCount();
-    refreshUndoButton();
-    markSaved();
-    if (launched) rebuildLines(false);
-    showSavedToast('“' + name + '” created — start typing');
+      renderCurrentScriptName();
+      renderReaders();
+      updateWordCount();
+      refreshUndoButton();
+      markSaved();
+      if (launched) rebuildLines(false);
+      showSavedToast('“' + name + '” created — start typing');
+    });
   });
 }
 
@@ -1083,7 +1111,7 @@ function toggleFocusWriting(force) {
   if (focusWriting) {
     if (area) { area.style.height = ''; area.focus(); }
   } else {
-    saveScriptNow();
+    // Still unsaved on purpose — closing the writing surface is not a save.
     applyEditorSize();
   }
 }
@@ -1645,29 +1673,39 @@ function loadSavedScripts() {
 
 function renderCurrentScriptName() {
   const script = tpGetActiveScript();
+  const name = script ? script.name : 'Untitled script';
+
   const elx = document.getElementById('currentScriptName');
-  if (elx) elx.textContent = script ? script.name : 'Untitled script';
+  if (elx) elx.textContent = name;
+
+  const focusTitle = document.getElementById('focusTitle');
+  if (focusTitle) focusTitle.textContent = name;
+}
+
+/** The name of the script currently being edited. */
+function activeScriptName() {
+  const script = tpGetActiveScript();
+  return script ? script.name : 'this script';
+}
+
+/**
+ * "Untitled script", then "Untitled script 2", … so creating a script is
+ * one Enter press instead of having to think of a name first.
+ */
+function suggestScriptName(base) {
+  const taken = tpGetScripts().map(s => s.name.toLowerCase());
+  if (!taken.includes(base.toLowerCase())) return base;
+  for (let n = 2; n < 500; n++) {
+    const candidate = base + ' ' + n;
+    if (!taken.includes(candidate.toLowerCase())) return candidate;
+  }
+  return base;
 }
 
 /* ── undo history ─────────────────────────────────────────────────
-   Autosave used to overwrite the script with no way back, and the
-   textarea's own Ctrl+Z is lost on reload. Snapshots are kept with
-   the script so a bad paste is recoverable even after a refresh. */
-
-let historySnapshotTimer = null;
-
-function scheduleHistorySnapshot() {
-  clearTimeout(historySnapshotTimer);
-  historySnapshotTimer = setTimeout(() => {
-    const script = tpGetActiveScript();
-    if (!script) return;
-    const next = tpPushHistory(script.history, script.body);
-    if (next !== script.history) {
-      tpUpdateScript(activeScriptId, { history: next });
-      refreshUndoButton();
-    }
-  }, 2500);
-}
+   Each explicit save first files the version it is replacing, and the
+   snapshots live with the script, so a bad paste is recoverable even
+   after a reload — unlike the textarea's own Ctrl+Z. */
 
 function refreshUndoButton() {
   const btn = document.getElementById('undoBtn');
@@ -1688,15 +1726,17 @@ function undoScript() {
   const previous = history.pop();
   const area = document.getElementById('scriptBody');
 
-  // Current text becomes redo-able by being pushed back if it differs.
+  // Put the old version back in the box and drop it from the list. The
+  // script itself is only rewritten when you save, like any other edit.
   if (area) area.value = previous;
-  tpUpdateScript(activeScriptId, { body: previous, history: history });
+  tpUpdateScript(activeScriptId, { history: history });
+  markUnsaved();
 
   updateWordCount();
   renderReaders();
   if (launched) rebuildLines(true);
   refreshUndoButton();
-  showSavedToast('Reverted to the previous version');
+  showSavedToast('Previous version restored — save to keep it');
 }
 
 (function wireUndo() {
@@ -1713,17 +1753,84 @@ function undoScript() {
   });
 })();
 
-// Auto-save script on every keystroke (debounced)
-let scriptSaveTimer = null;
-function scheduleScriptSave() {
-  clearTimeout(scriptSaveTimer);
-  scriptSaveTimer = setTimeout(() => {
-    saveScripts();
-    scheduleHistorySnapshot();
-    markSaved();
-    showSavedToast('Script saved ✓');
-  }, 800);
+/* ── unsaved-changes guard ────────────────────────────────────────
+   Nothing is saved on a timer. The cost of that is that leaving the
+   page with unsaved text would throw the work away silently, so every
+   exit route asks first: Save, Discard, or stay put. */
+
+let guardOnLeave = null;
+
+/**
+ * Runs `proceed` only once it is safe to lose what is on screen.
+ * Clean editor: runs straight away. Dirty editor: opens the dialog.
+ */
+function guardUnsaved(whatFor, proceed) {
+  if (!scriptDirty) { proceed(); return; }
+
+  const modal = document.getElementById('unsavedModal');
+  if (!modal) {
+    // No dialog on the page: never discard silently, save instead.
+    saveScriptNow();
+    proceed();
+    return;
+  }
+
+  const msg = document.getElementById('unsavedMsg');
+  if (msg) {
+    msg.textContent = whatFor + ' will discard the changes you have made to “' +
+      activeScriptName() + '”. Save them first?';
+  }
+  guardOnLeave = proceed;
+  modal.classList.add('open');
+  const saveBtn = document.getElementById('unsavedSaveBtn');
+  if (saveBtn) saveBtn.focus();
 }
+
+function closeUnsavedModal() {
+  const modal = document.getElementById('unsavedModal');
+  if (modal) modal.classList.remove('open');
+  guardOnLeave = null;
+}
+
+(function wireUnsavedGuard() {
+  const modal = document.getElementById('unsavedModal');
+  if (!modal) return;
+
+  const run = () => { const fn = guardOnLeave; closeUnsavedModal(); if (fn) fn(); };
+
+  const saveBtn = document.getElementById('unsavedSaveBtn');
+  if (saveBtn) saveBtn.addEventListener('click', () => { saveScriptNow(); run(); });
+
+  const discardBtn = document.getElementById('unsavedDiscardBtn');
+  if (discardBtn) discardBtn.addEventListener('click', () => { markSaved(); run(); });
+
+  const cancelBtn = document.getElementById('unsavedCancelBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeUnsavedModal);
+
+  modal.addEventListener('click', e => { if (e.target === modal) closeUnsavedModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeUnsavedModal();
+  });
+
+  // Following a link in the top bar is the usual way out of the page.
+  document.querySelectorAll('a[href]:not([href^="#"])').forEach(a => {
+    a.addEventListener('click', e => {
+      if (!scriptDirty || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      const href = a.getAttribute('href');
+      guardUnsaved('Leaving this page', () => { window.location.href = href; });
+    });
+  });
+
+  // Closing the tab or hitting reload: the browser's own confirm is the
+  // only thing that can stop it.
+  window.addEventListener('beforeunload', e => {
+    if (!scriptDirty) return;
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  });
+})();
 
 /* ── rename / save-as-new dialog ──────────────────────────────── */
 
@@ -1787,19 +1894,22 @@ function closeNameModal() {
     const script = tpGetActiveScript();
     const suggested = (script ? script.name : 'Script') + ' (copy)';
     openNameModal('Save as a new script', suggested, name => {
-      saveScripts();   // flush pending edits into the current script first
+      // The old script is left exactly as it was last saved; this text
+      // becomes a separate script, which is now the one being edited.
       const created = tpAddScript(tpMakeScript(name, scriptBodyValue(), mode, readers));
       activeScriptId = created.id;
       tpSetActiveScript(created.id);
       renderCurrentScriptName();
+      refreshUndoButton();
+      markSaved();
       showSavedToast('Saved as “' + name + '” ✓');
     });
   });
 })();
 
-// Also save when mode changes
+// Changing the reader count is a script change too — flag it, don't store it.
 const _origSetMode = setMode;
-setMode = function(m) { _origSetMode(m); saveScripts(); };
+setMode = function(m) { _origSetMode(m); markUnsaved(); };
 
 /* ═══════════════════════════════════════════════════════════════
    SESSION TRACKING — feeds the Session Report page
@@ -1869,9 +1979,7 @@ function countRewind() { if (sessionRun) sessionRun.rewinds++; }
 
 const _origLaunchStage = launchStage;
 launchStage = function() {
-  // Flush any pending keystroke save so the run is measured against saved text.
-  clearTimeout(scriptSaveTimer);
-  saveScripts();
+  // The stage reads the box directly, so an unsaved script still plays.
   _origLaunchStage();
   stageEl.classList.add('is-live');   // reveals the centre marker
   syncControlsHeight();   // the controls bar is only visible from now on
@@ -1940,5 +2048,7 @@ window.addEventListener('pagehide', () => { endSession(false); });
 loadSavedScripts();
 
 // Make sure only the reader cards for the active mode are visible.
+// Nothing has been edited yet, so the badge goes back to Saved.
 setMode(mode);
+markSaved();
 

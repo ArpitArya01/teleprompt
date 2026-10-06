@@ -255,6 +255,29 @@ body.app-body {
   box-shadow: 0 0 7px #34d399;
 }
 
+/* ── toast (created by theme.js, hence no markup for it) ──────── */
+
+.app-toast {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 999;
+  padding: 9px 16px;
+  background: rgba(124, 111, 255, 0.18);
+  border: 1px solid rgba(124, 111, 255, 0.4);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  color: var(--accent);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.app-toast.visible { opacity: 1; }
+
 /* ── script name field + chips ────────────────────────────────── */
 
 .script-name-field {
@@ -266,6 +289,14 @@ body.app-body {
   border-radius: 11px;
   padding: 10px 10px 10px 14px;
   margin-bottom: 10px;
+}
+.script-name-label {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 .script-name-text {
   flex: 1;
@@ -289,9 +320,31 @@ body.app-body {
   transition: background .15s, color .15s;
 }
 .field-edit:hover { background: rgba(139, 92, 246, 0.3); color: #fff; }
-.field-edit svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.field-edit svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
 
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+
+/* Four actions of different word lengths wrapped into ragged rows, so they
+   get equal cells instead: two tidy columns with matching heights. */
+.chip-row.script-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 9px;
+}
+.chip-row.script-actions .chip {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  padding: 8px 10px;      /* same metrics for every cell, primary included */
+}
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
@@ -309,7 +362,15 @@ body.app-body {
   transition: background .15s, border-color .15s, transform .12s;
 }
 .chip:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--card-border-hi); transform: translateY(-1px); }
-.chip svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.chip svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .chip.danger { color: #fca5a5; border-color: rgba(248, 113, 113, 0.3); }
 .chip.danger:hover { background: rgba(248, 113, 113, 0.12); }
 
@@ -532,15 +593,22 @@ body.app-body {
 
 /* ── script toolbar ──────────────────────────────────────────── */
 
+/* Three equal cells, so this row lines up with the actions grid above
+   instead of pushing two chips off to the right. */
 .script-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
   margin-bottom: 11px;
 }
-.script-toolbar .toolbar-gap { flex: 1; min-width: 0; }
-.script-toolbar .chip { padding: 6px 10px; font-size: 11px; }
+.script-toolbar .toolbar-gap { display: none; }
+.script-toolbar .chip {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  padding: 7px 8px;
+  font-size: 11px;
+}
 .script-toolbar .chip:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 .script-toolbar .chip:disabled:hover { background: rgba(255, 255, 255, 0.045); transform: none; }
 .script-toolbar .chip.active {
@@ -566,6 +634,18 @@ body.app-body {
   color: #fcd34d;
   border-color: rgba(251, 191, 36, 0.45);
   background: rgba(251, 191, 36, 0.1);
+}
+
+/* the Save button is the only way text is stored, so it asks for attention */
+.chip.primary.needs-save {
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5), 0 7px 22px rgba(139, 92, 246, 0.35);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chip.primary.needs-save { animation: needsSavePulse 1.8s ease-in-out infinite; }
+}
+@keyframes needsSavePulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5), 0 7px 22px rgba(139, 92, 246, 0.35); }
+  50%      { box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.18), 0 7px 22px rgba(139, 92, 246, 0.35); }
 }
 
 /* ── script editor ────────────────────────────────────────────── */
@@ -705,8 +785,20 @@ body.focus-writing { overflow: hidden; }
   flex-shrink: 0;
   box-shadow: 0 0 6px currentColor;
 }
-.per-reader-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.per-reader-row .vals { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.per-reader-row .nm {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.per-reader-row .vals {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
 
 /* ── stage speaker labels + pauses ────────────────────────────── */
 
@@ -1232,4 +1324,3 @@ table.history tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
   .hero-icon, .stage-hint .hero-icon { animation: none; }
   .start-btn, .chip:hover, .start-btn:hover { animation: none; transform: none; }
 }
-

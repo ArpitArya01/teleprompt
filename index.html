@@ -46,9 +46,7 @@
     </button>
 
     <button class="icon-btn" id="pageBgBtn" onclick="togglePageBgPanel()" title="Appearance &amp; theme">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-        <circle cx="8" cy="8" r="3"/><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M12.95 3.05l-1.13 1.13M4.18 11.82l-1.13 1.13"/>
-      </svg>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M12.95 3.05l-1.13 1.13M4.18 11.82l-1.13 1.13"/></svg>
       <span class="sr-only">Appearance and theme</span>
     </button>
 
@@ -65,19 +63,21 @@
   <!-- ══════════ LEFT: EDITOR ══════════ -->
   <div class="editor-panel">
 
-    <!-- Your Script -->
-    <section class="card">
+    <!-- Your Script — name, actions and the writing box in one place -->
+    <section class="card" id="scriptCard">
       <header class="card-head">
         <span class="card-icon pink">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.3 3.2L12.5 6 9.3 7.3 8 10.5 6.7 7.3 3.5 6l3.2-1.3zM12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>
         </span>
         <div class="card-titles">
-          <h2>Your Script</h2>
-          <p>Write, organize, and bring your ideas to life.</p>
+          <h2 id="scriptCardTitle">Your Script</h2>
+          <p id="scriptHowTo">Write top to bottom. One line per screen line.</p>
         </div>
       </header>
 
+      <!-- which script you are editing right now -->
       <div class="script-name-field">
+        <span class="script-name-label">Editing</span>
         <span class="script-name-text" id="currentScriptName">Untitled script</span>
         <button class="field-edit" id="renameScriptBtn" title="Rename this script">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 2.3l2.4 2.4-8 8H3.3V10z"/></svg>
@@ -85,12 +85,16 @@
         </button>
       </div>
 
-      <div class="chip-row">
+      <div class="chip-row script-actions">
+        <button class="chip primary" id="newScriptBtn" type="button" title="Start a brand new script">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          New script
+        </button>
         <button class="chip" id="renameScriptBtn2" type="button">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 2.3l2.4 2.4-8 8H3.3V10z"/></svg>
           Rename
         </button>
-        <button class="chip" id="saveAsNewBtn" title="Keep this version and start a separate copy">
+        <button class="chip" id="saveAsNewBtn" type="button" title="Keep this version and start a separate copy">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7L13.5 6v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M5.5 9.5h5v5h-5z"/></svg>
           Save as new
         </button>
@@ -98,6 +102,61 @@
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 4.5a1 1 0 0 1 1-1h3l1.5 1.5h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1z"/></svg>
           All scripts
         </a>
+      </div>
+
+      <!-- undo / size, above the box -->
+      <div class="script-toolbar">
+        <button class="chip" id="undoBtn" title="Undo the last big change" disabled>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 7.5h7a3 3 0 0 1 0 6H6"/><path d="M5.5 4.5L2.5 7.5l3 3"/></svg>
+          Undo
+        </button>
+        <span class="toolbar-gap"></span>
+        <button class="chip" id="sizeBtn" title="Make the writing box taller">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M5 5.5L8 2.5l3 3M5 10.5L8 13.5l3-3"/></svg>
+          <span id="sizeLabel">Medium</span>
+        </button>
+        <button class="chip" id="focusBtn" title="Write using the whole window">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.5H2.5V6M10 13.5h3.5V10M13.5 6V2.5H10M2.5 10v3.5H6"/></svg>
+          Full screen
+        </button>
+      </div>
+
+      <!-- reader chips: name, colour, and how much each one speaks -->
+      <div class="readers" id="readersList"></div>
+
+      <div class="script-warnings" id="scriptWarnings"></div>
+
+      <div class="script-editor" id="scriptEditor">
+        <div class="focus-bar">
+          <span class="focus-title" id="focusTitle">Writing</span>
+          <span class="focus-hint">Esc to close</span>
+          <button class="chip" id="focusCloseBtn">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            Done
+          </button>
+        </div>
+        <textarea id="scriptBody" spellcheck="true"
+          placeholder="Type or paste your script here…&#10;&#10;Leave a blank line to add a pause.&#10;Long paragraphs are split automatically.">Welcome to the Teleprompter!
+
+This text will scroll upward on the screen. You can read along as it moves, and long paragraphs are broken into comfortable lines for you automatically.
+
+Edit this text in the box on the left side.
+
+Practice your speech or dialogue here.
+
+Adjust the speed using the slider below, and press Pause anytime you need to stop.
+
+Happy reading!</textarea>
+
+        <!-- save sits under the box, where you finish writing -->
+        <div class="script-footer">
+          <span class="save-state" id="saveState">Saved</span>
+          <span class="toolbar-gap"></span>
+          <button class="chip primary" id="saveNowBtn" title="Save this script now (Ctrl+S)">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7L13.5 6v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M5.5 9.5h5v5h-5z"/></svg>
+            Save script
+          </button>
+        </div>
       </div>
     </section>
 
@@ -187,78 +246,6 @@
       </div>
     </section>
 
-    <!-- Script text -->
-    <section class="card">
-      <header class="card-head">
-        <span class="card-icon pink">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="1.6"/><path d="M5 5.5h6M5 8h6M5 10.5h3.5"/></svg>
-        </span>
-        <div class="card-titles">
-          <h2 id="scriptCardTitle">Script</h2>
-          <p id="scriptHowTo">Write top to bottom. One line per screen line.</p>
-        </div>
-      </header>
-
-      <!-- create / undo / size, above the box -->
-      <div class="script-toolbar">
-        <button class="chip" id="newScriptBtn" title="Start a brand new script">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-          New
-        </button>
-        <button class="chip" id="undoBtn" title="Undo the last big change" disabled>
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 7.5h7a3 3 0 0 1 0 6H6"/><path d="M5.5 4.5L2.5 7.5l3 3"/></svg>
-          Undo
-        </button>
-        <span class="toolbar-gap"></span>
-        <button class="chip" id="sizeBtn" title="Make the writing box taller">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M5 5.5L8 2.5l3 3M5 10.5L8 13.5l3-3"/></svg>
-          <span id="sizeLabel">Medium</span>
-        </button>
-        <button class="chip" id="focusBtn" title="Write using the whole window">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.5H2.5V6M10 13.5h3.5V10M13.5 6V2.5H10M2.5 10v3.5H6"/></svg>
-          Full screen
-        </button>
-      </div>
-
-      <!-- reader chips: name, colour, and how much each one speaks -->
-      <div class="readers" id="readersList"></div>
-
-      <div class="script-warnings" id="scriptWarnings"></div>
-
-      <div class="script-editor" id="scriptEditor">
-        <div class="focus-bar">
-          <span class="focus-title" id="focusTitle">Writing</span>
-          <span class="focus-hint">Esc to close</span>
-          <button class="chip" id="focusCloseBtn">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-            Done
-          </button>
-        </div>
-        <textarea id="scriptBody" spellcheck="true"
-          placeholder="Type or paste your script here…&#10;&#10;Leave a blank line to add a pause.&#10;Long paragraphs are split automatically.">Welcome to the Teleprompter!
-
-This text will scroll upward on the screen. You can read along as it moves, and long paragraphs are broken into comfortable lines for you automatically.
-
-Edit this text in the box on the left side.
-
-Practice your speech or dialogue here.
-
-Adjust the speed using the slider below, and press Pause anytime you need to stop.
-
-Happy reading!</textarea>
-
-        <!-- save sits under the box, where you finish writing -->
-        <div class="script-footer">
-          <span class="save-state" id="saveState">Saved</span>
-          <span class="toolbar-gap"></span>
-          <button class="chip primary" id="saveNowBtn" title="Save this script now (Ctrl+S)">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7L13.5 6v7.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M5.5 9.5h5v5h-5z"/></svg>
-            Save script
-          </button>
-        </div>
-      </div>
-    </section>
-
     <!-- Font -->
     <section class="card">
       <header class="card-head">
@@ -345,10 +332,7 @@ Happy reading!</textarea>
     <!-- idle hero -->
     <div class="stage-hint" id="stageHint">
       <div class="hero-icon">
-        <svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M9 4.5h11L26 10.5v19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 8 29.5v-23A1.5 1.5 0 0 1 9.5 5z"/>
-          <path d="M13 14h8M13 18.5h8M13 23h5"/>
-        </svg>
+        <svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4.5h11L26 10.5v19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 8 29.5v-23A1.5 1.5 0 0 1 9.5 5z"/><path d="M13 14h8M13 18.5h8M13 23h5"/></svg>
         <span class="hero-spark">✦</span>
       </div>
       <h2 class="hero-title">Write your script</h2>
@@ -379,9 +363,7 @@ Happy reading!</textarea>
     <!-- Completion screen -->
     <div class="complete-screen" id="completeScreen">
       <div class="complete-ring">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-          <path d="M5 14l6 6L23 8"/>
-        </svg>
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 14l6 6L23 8"/></svg>
       </div>
       <div class="complete-title">Script Complete</div>
       <div class="complete-sub">Great reading session!</div>
@@ -544,6 +526,19 @@ Happy reading!</textarea>
     <div class="modal-actions">
       <button class="btn" id="nameCancelBtn">Cancel</button>
       <button class="btn primary" id="nameSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Unsaved-changes guard: nothing is saved on a timer, so every exit asks -->
+<div class="modal-backdrop" id="unsavedModal" role="dialog" aria-modal="true" aria-labelledby="unsavedTitle">
+  <div class="modal">
+    <h3 id="unsavedTitle">You have unsaved changes</h3>
+    <p class="modal-msg" id="unsavedMsg"></p>
+    <div class="modal-actions">
+      <button class="btn" id="unsavedCancelBtn">Keep editing</button>
+      <button class="btn danger" id="unsavedDiscardBtn">Discard</button>
+      <button class="btn primary" id="unsavedSaveBtn">Save</button>
     </div>
   </div>
 </div>

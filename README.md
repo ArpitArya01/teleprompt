@@ -71,15 +71,38 @@ The editor warns you — with a one-click fix — when:
 - a colour is too dark to read against the current background
 - lines are tagged for a reader who is currently switched off
 
+### Saving
+
+Nothing is written to storage until you ask for it. **Save script** (or
+`Ctrl`/`Cmd` + `S`) is the only thing that stores what is in the box.
+
+- The badge under the box reads **Saved** or **Unsaved**, and the Save button
+  highlights itself while there is something to store.
+- Starting the teleprompter, leaving full-screen writing, switching tabs and
+  clicking away all leave the script alone — they are not saves.
+- Anything that would throw unsaved work away first asks: **Save**,
+  **Discard**, or **Keep editing**. That covers starting a new script and
+  following a link to the Library or Report. Closing or reloading the tab
+  raises the browser's own "leave site?" warning.
+- **Undo** puts the previous saved version back in the box. It is a change like
+  any other, so it only becomes permanent when you save.
+
 ### Editing comfort
 
+The **Your Script** card at the top of the editor holds everything about the
+script you are writing: its name, the actions, and the writing box itself.
+
+- **New script** starts a fresh script without leaving the page. The dialog
+  pre-fills a name, so it's one `Enter` press.
+- What you save goes into the script named in the card — there is no separate
+  "add to library" step.
+- **Save as new** copies what is in the box into a separate script and leaves
+  the original at its last saved version.
 - **Size** cycles the box between Small, Medium and Large. Your choice is remembered.
 - **Full screen** turns the whole window into the writing surface. `Esc` or **Done** to come back.
 - The bottom-right corner of the box can be dragged to any height.
-- **Save script** writes immediately; the badge shows **Saved** or **Unsaved**.
-  Typing also autosaves after a short pause.
-- **Undo** steps back through up to 12 saved versions. These are stored with the
-  script, so a bad paste is recoverable even after a reload.
+- Version history keeps up to 12 previous saves with the script, so a bad paste
+  is recoverable even after a reload.
 
 ---
 
