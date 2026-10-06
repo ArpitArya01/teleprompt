@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    report.js — Session Report page
-   Depends on storage.js (loaded first).
+   Depends on script-model.js and storage.js (loaded first, in that order).
    ═══════════════════════════════════════════════════════════════ */
 
 tpApplySavedTheme();
