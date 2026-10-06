@@ -1,3 +1,11 @@
+/* ═══════════════════════════════════════════════════════════════
+   app.js — the teleprompter page (index.html)
+   ───────────────────────────────────────────────────────────────
+   Depends on script-model.js and storage.js, loaded first in that
+   order. Sections run top to bottom: fonts, state, editor, stage
+   playback, theme, script persistence, then session tracking.
+   ═══════════════════════════════════════════════════════════════ */
+
 
 // ── FONT PICKER ──
 const fonts = [
